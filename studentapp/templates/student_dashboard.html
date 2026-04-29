@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Student Page{% endblock %}
+
+{% block content %}
+    <h1>Student Page</h1>
+    <p>Welcome, {{ request.user.first_name|default:request.user.username }}.</p>
+    <div class="actions">
+        <a href="{% url 'edit_account' %}" class="button-link">Edit Account</a>
+    </div>
+{% endblock %}

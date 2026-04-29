@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Account{% endblock %}
+
+{% block content %}
+    <h1>Edit Account</h1>
+    <p>Update your account details and account type here.</p>
+    <form method="post" class="narrow-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="field-row">
+            {{ form.username.label_tag }}
+            {{ form.username.errors }}
+            {{ form.username }}
+        </div>
+        <div class="field-row">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name.errors }}
+            {{ form.first_name }}
+        </div>
+        <div class="field-row">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name.errors }}
+            {{ form.last_name }}
+        </div>
+        <div class="field-row">
+            {{ form.account_type.label_tag }}
+            {{ form.account_type.errors }}
+            {{ form.account_type }}
+        </div>
+        <div class="actions">
+            <button type="submit">Save Changes</button>
+            <a href="{% url 'dashboard_redirect' %}" class="button-link secondary">Cancel</a>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Page{% endblock %}
+
+{% block content %}
+    <h1>Teacher Page</h1>
+    <p>Welcome, {{ request.user.first_name|default:request.user.username }}.</p>
+    <div class="actions">
+        <a href="{% url 'addNewStudent' %}" class="button-link">Add Student</a>
+        <a href="{% url 'edit_account' %}" class="button-link secondary">Edit Account</a>
+    </div>
+{% endblock %}

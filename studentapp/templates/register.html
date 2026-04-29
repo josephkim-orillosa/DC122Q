@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block page_class %}auth-card{% endblock %}
+
+{% block content %}
+    <h1>Create Account</h1>
+    <p>Choose whether the account is for a student or a teacher.</p>
+    <form method="post" class="narrow-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="field-row">
+            {{ form.account_type.label_tag }}
+            {{ form.account_type.errors }}
+            {{ form.account_type }}
+        </div>
+        <div class="field-row">
+            {{ form.username.label_tag }}
+            {{ form.username.errors }}
+            {{ form.username }}
+        </div>
+        <div class="field-row">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name.errors }}
+            {{ form.first_name }}
+        </div>
+        <div class="field-row">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name.errors }}
+            {{ form.last_name }}
+        </div>
+        <div class="field-row">
+            {{ form.password.label_tag }}
+            {{ form.password.errors }}
+            {{ form.password }}
+        </div>
+        <div class="actions">
+            <button type="submit">Register</button>
+            <a href="{% url 'login' %}" class="button-link secondary">Back to Log In</a>
+        </div>
+    </form>
+{% endblock %}
