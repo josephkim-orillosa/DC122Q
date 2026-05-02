@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Event Planner{% endblock %}
+{% block page_class %}wide-page{% endblock %}
+
+{% block content %}
+    <h1>EVENT PLANNER</h1>
+
+    <form method="post" class="event-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="actions">
+            <button type="submit">Create Event</button>
+            <a href="{% url 'teacher_dashboard' %}" class="button-link secondary">Back</a>
+        </div>
+    </form>
+
+    <h2>Created Events</h2>
+    {% for event in events %}
+        <div class="event-card">
+            <h3>{{ event.title }}</h3>
+            <p class="event-time">{{ event.scheduled_at|date:"M d, Y g:i A" }}</p>
+            {% if event.description %}
+                <p>{{ event.description }}</p>
+            {% endif %}
+            <p>{{ event.participants.count }} student{{ event.participants.count|pluralize }} joined</p>
+            <div class="participants">
+                <strong>Joined Students</strong>
+                {% if event.participants.all %}
+                    <ul>
+                        {% for student in event.participants.all %}
+                            <li>{{ student.get_full_name|default:student.username }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No students joined yet.</p>
+                {% endif %}
+            </div>
+
+            <form method="post" action="{% url 'delete_event' event.id %}" class="delete-event-form">
+                {% csrf_token %}
+                <button type="submit" class="secondary">Delete Event</button>
+            </form>
+        </div>
+    {% empty %}
+        <p>No events created yet.</p>
+    {% endfor %}
+{% endblock %}

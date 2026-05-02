@@ -1,16 +1,80 @@
+from datetime import datetime
+
 from django import forms
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
+from django.utils import timezone
 
-from .models import AccountProfile
-from .models import Student
+from .models import AccountProfile, Event, Student
 
 
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
         fields = '__all__'
+
+
+class EventForm(forms.ModelForm):
+    HOUR_CHOICES = [(hour, datetime.strptime(str(hour), "%H").strftime("%I %p")) for hour in range(24)]
+    MINUTE_CHOICES = [(minute, f"{minute:02d}") for minute in range(0, 60, 5)]
+
+    scheduled_date = forms.DateField(
+        label="Schedule Date",
+        widget=forms.SelectDateWidget,
+    )
+    scheduled_hour = forms.ChoiceField(
+        label="Schedule Hour",
+        choices=HOUR_CHOICES,
+    )
+    scheduled_minute = forms.ChoiceField(
+        label="Schedule Minute",
+        choices=MINUTE_CHOICES,
+    )
+
+    class Meta:
+        model = Event
+        fields = ("title", "description")
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        scheduled_at = self.instance.scheduled_at if self.instance and self.instance.pk else None
+        if scheduled_at:
+            scheduled_at = timezone.localtime(scheduled_at)
+            self.fields["scheduled_date"].initial = scheduled_at.date()
+            self.fields["scheduled_hour"].initial = scheduled_at.hour
+            self.fields["scheduled_minute"].initial = scheduled_at.minute
+
+    def clean(self):
+        cleaned_data = super().clean()
+        scheduled_date = cleaned_data.get("scheduled_date")
+        scheduled_hour = cleaned_data.get("scheduled_hour")
+        scheduled_minute = cleaned_data.get("scheduled_minute")
+
+        if scheduled_date and scheduled_hour is not None and scheduled_minute is not None:
+            scheduled_at = datetime.combine(
+                scheduled_date,
+                datetime.min.time().replace(
+                    hour=int(scheduled_hour),
+                    minute=int(scheduled_minute),
+                ),
+            )
+            if timezone.is_naive(scheduled_at):
+                scheduled_at = timezone.make_aware(scheduled_at)
+            cleaned_data["scheduled_at"] = scheduled_at
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        event = super().save(commit=False)
+        event.scheduled_at = self.cleaned_data["scheduled_at"]
+        if commit:
+            event.save()
+            self.save_m2m()
+        return event
 
 
 class LoginForm(AuthenticationForm):

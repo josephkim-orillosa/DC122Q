@@ -24,3 +24,26 @@ class Student(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Event(models.Model):
+    title = models.CharField(max_length=150)
+    description = models.TextField(blank=True)
+    scheduled_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="managed_events",
+    )
+    participants = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="joined_events",
+    )
+
+    class Meta:
+        ordering = ["scheduled_at", "title"]
+
+    def __str__(self):
+        return self.title

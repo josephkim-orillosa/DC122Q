@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Student Page{% endblock %}
+{% block page_class %}wide-page{% endblock %}
 
 {% block content %}
     <h1>Student Page</h1>
@@ -8,4 +9,31 @@
     <div class="actions">
         <a href="{% url 'edit_account' %}" class="button-link">Edit Account</a>
     </div>
+
+    <h2>Available Events</h2>
+    {% for event in events %}
+        <div class="event-card">
+            <h3>{{ event.title }}</h3>
+            <p class="event-time">{{ event.scheduled_at|date:"M d, Y g:i A" }}</p>
+            {% if event.description %}
+                <p>{{ event.description }}</p>
+            {% endif %}
+            <p>Teacher: {{ event.teacher.get_full_name|default:event.teacher.username }}</p>
+            <p>{{ event.participants.count }} student{{ event.participants.count|pluralize }} joined</p>
+
+            {% if event.id in joined_event_ids %}
+                <form method="post" action="{% url 'leave_event' event.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="secondary">Cancel Join</button>
+                </form>
+            {% else %}
+                <form method="post" action="{% url 'join_event' event.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Join Event</button>
+                </form>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No events are available yet.</p>
+    {% endfor %}
 {% endblock %}

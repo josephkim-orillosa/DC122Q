@@ -3,10 +3,11 @@ from functools import wraps
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from .forms import AccountEditForm, LoginForm, RegisterForm, StudentForm
-from .models import AccountProfile
+from .forms import AccountEditForm, EventForm, LoginForm, RegisterForm, StudentForm
+from .models import AccountProfile, Event
 
 
 def get_account_profile(user):
@@ -73,13 +74,67 @@ def dashboard_redirect(request):
 @login_required
 @role_required(AccountProfile.STUDENT)
 def student_dashboard(request):
-    return render(request, 'student_dashboard.html')
+    events = Event.objects.select_related('teacher').prefetch_related('participants')
+    joined_event_ids = list(request.user.joined_events.values_list('id', flat=True))
+    return render(
+        request,
+        'student_dashboard.html',
+        {'events': events, 'joined_event_ids': joined_event_ids},
+    )
 
 
 @login_required
 @role_required(AccountProfile.TEACHER)
 def teacher_dashboard(request):
     return render(request, 'teacher_dashboard.html')
+
+
+@login_required
+@role_required(AccountProfile.TEACHER)
+def event_planner(request):
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.teacher = request.user
+            event.save()
+            messages.success(request, 'Event created successfully.')
+            return redirect('event_planner')
+    else:
+        form = EventForm()
+
+    events = request.user.managed_events.prefetch_related('participants')
+    return render(request, 'event_planner.html', {'form': form, 'events': events})
+
+
+@login_required
+@role_required(AccountProfile.TEACHER)
+@require_POST
+def delete_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id, teacher=request.user)
+    event.delete()
+    messages.success(request, 'Event deleted successfully.')
+    return redirect('event_planner')
+
+
+@login_required
+@role_required(AccountProfile.STUDENT)
+@require_POST
+def join_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    event.participants.add(request.user)
+    messages.success(request, 'You joined the event.')
+    return redirect('student_dashboard')
+
+
+@login_required
+@role_required(AccountProfile.STUDENT)
+@require_POST
+def leave_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    event.participants.remove(request.user)
+    messages.success(request, 'You left the event.')
+    return redirect('student_dashboard')
 
 
 @login_required
